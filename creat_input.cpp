@@ -132,8 +132,6 @@ void Format_input::creat_input(char *p)
             default:
                 break;
         }
-
-       
     }
     fclose(O);
 }
