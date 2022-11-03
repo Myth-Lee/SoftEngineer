@@ -1,49 +1,84 @@
 #include "creat_input.h"
 
-Format_input::Format_input(char* p,int g)
+Format_input::Format_input(string &p)
 {
     path = p;
-    group_num = g;
 }
 
 void Format_input::read_format_txt()
 {
     FILE *I;
-    I = fopen(path, "r");
+    I = fopen(path.data(), "r");
     int count = 1;
-    regex reg("[0-9]+");
-    smatch num;
-    while (!feof(I))
+    char s[30];
+    char c[2]; 
+    int len = 0;
+    while (fgets(c, 2, I) != NULL)
     {
-        char*a;
-        string s="";
-        do
+        if (c[0] != ' ' && c[0] != '\n') 
         {
-            fgets(a, 1, (FILE *)I);
-            s = s + *a;
-        } while (*a != ' ' && *a != '\n');
-        Type T;
-        if (s[0] == 'i')
-        {
-            T.kind = 0;
-            regex_match(s, num, reg);
-            T.a = stoi(num[0]);
-            T.b = stoi(num[1]);
+            s[len] = c[0];
+            len++;
+            continue;
         }
-        else if (s[0] == 'c')
-            T.kind = 1;
-        else 
-        {
-            T.kind = 2;
-            regex_match(s, num, reg);
-            T.a = stoi(num[0]);
-            T.b = stoi(num[1]);
-        }
-        T.line = count;
-        input.push_back(T);
-        if (*a == '\n')
+        s[len] = '\0';
+        len = 0;
+        add_input(s, count);
+        if (c[0] == '\n')
             count++;
     }
+    add_input(s, count);
+    fclose(I);
+}
+
+void Format_input::add_input(char s[],int count)
+{
+    Type T;
+    if (s[0] == 'i')
+    {
+        T.kind = 0;
+        string num1, num2;
+        int pos = 0;
+        for (int i = 4; i < strlen(s);i++) if (s[i]==',')
+                pos = i;
+        for (int i = 4; i < strlen(s) - 1; i++)
+        {
+            if (i < pos)
+            {
+                num1 += s[i];
+            }
+            else if (i > pos)
+            {
+                num2 += s[i];
+            }
+        }
+        T.a = stoi(num1);
+        T.b = stoi(num2);
+    }
+    else if (s[0] == 'c') T.kind = 1;
+    else
+    {
+        T.kind = 2;
+        string num1, num2;
+        int pos = 0;
+        for (int i = 7; i < strlen(s);i++) if (s[i]==',')
+                pos = i;
+        for (int i = 7; i < strlen(s) - 1; i++)
+        {
+            if (i < pos)
+            {
+                num1 += s[i];
+            }
+            else if (i > pos)
+            {
+                num2 += s[i];
+            }
+        }
+        T.a = stoi(num1);
+        T.b = stoi(num2);
+    }
+    T.line = count;
+    input.push_back(T);
 }
 
 void Format_input::creat_input(char *p)
@@ -53,6 +88,11 @@ void Format_input::creat_input(char *p)
     int count = 1;
     for (int i = 0; i < input.size(); i++)
     {
+        if (input[i].line!=count)
+        {
+            count++;
+            fprintf(O, "\n");
+        }
         switch (input[i].kind)
         {
             case 0:
@@ -63,7 +103,7 @@ void Format_input::creat_input(char *p)
             }
             case 1:
             {
-                int r1 = rand() % 90 + 65; int r2 = rand() % 122 + 97; int r3 = rand() % 1;
+                int r1 = 'a' + rand() % 26; int r2 = 'A' + rand() % 26; int r3 = rand() % 2;
                 char c;
                 if (r3 == 0)
                     c = r1;
@@ -74,16 +114,18 @@ void Format_input::creat_input(char *p)
             }
             case 2:
             {
-                string s = "";
+                char s[100];
                 int len = rand() % input[i].b + input[i].a;
-                for (int i=0;i<len;i++)
+                //cout << len << endl;
+                for (int i = 0; i < len; i++)
                 {
-                    int r1 = rand() % 90 + 65; int r2 = rand() % 122 + 97; int r3 = rand() % 1;
+                    int r1 = 'a' + rand() % 26; int r2 = 'A' + rand() % 26; int r3 = rand() % 2;
                     char c;
-                    if (r3 == 0) c = r1;
-                    else c = r2;
-                    s = s + c;
+                    if (r3 == 0) c =(char)r1;
+                    else c =(char)r2;
+                    s[i] = c;
                 }
+                s[len] = '\0';
                 fprintf(O, "%s ", s);
                 break;
             }
@@ -91,17 +133,7 @@ void Format_input::creat_input(char *p)
                 break;
         }
 
-        if (input[i].line!=count)
-        {
-            count++;
-            fprintf(O, "\n");
-        }
+       
     }
-}
-
-int main()
-{
-    Format_input f("/input/4A/stdin_format.txt",1);
-    f.read_format_txt();
-    f.creat_input("input.txt");
+    fclose(O);
 }
